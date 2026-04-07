@@ -1,0 +1,64 @@
+
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: todo_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - todo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./TodoApi/TodoApi
+      dockerfile: Dockerfile
+    container_name: todo_backend
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+    ports:
+      - "5284:5284"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - todo_network
+
+  frontend:
+    build:
+      context: ./my-react-app
+      dockerfile: Dockerfile
+    container_name: todo_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - todo_network
+      -
+
+volumes:
+  postgres_data:
+    name: todo_postgres_data
+
+networks:
+  todo_network:
+    name: todo_network
+    driver: bridge
