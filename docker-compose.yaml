@@ -17,7 +17,7 @@ services:
       retries: 5
 
   backend:
-    build: ./TodoApi
+    build: ./TodoApi/TodoApi
     container_name: todo_backend
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=tododb;Username=postgres;Password=postgres
