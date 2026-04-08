@@ -1,64 +1,36 @@
-
+version: '3.8'
 
 services:
-
   db:
-    image: postgres:16-alpine
+    image: postgres:15
     container_name: todo_db
-    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tododb
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
-      - todo_network
+      - todo-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
   backend:
-    build:
-      context: ./TodoApi/TodoApi
-      dockerfile: Dockerfile
+    build: ./backend        # adjust path to your .NET project folder
     container_name: todo_backend
-    restart: unless-stopped
     environment:
-      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
-      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
-    ports:
-      - "5284:5284"
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=tododb;Username=postgres;Password=postgres
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - todo_network
-
-  frontend:
-    build:
-      context: ./my-react-app
-      dockerfile: Dockerfile
-    container_name: todo_frontend
-    restart: unless-stopped
     ports:
-      - "3000:80"
-    depends_on:
-      - backend
+      - "5000:80"
     networks:
-      - todo_network
-      -
-
-volumes:
-  postgres_data:
-    name: todo_postgres_data
+      - todo-net
 
 networks:
-  todo_network:
-    name: todo_network
+  todo-net:
     driver: bridge
