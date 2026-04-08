@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import Inputs from './input';
 
-const API_URL = "http://localhost:5284/tasks";
+const API_URL = "/api/tasks";
 
 function App() {
   const [task, setTask] = React.useState("");
